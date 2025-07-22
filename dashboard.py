@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 from textblob import TextBlob
 import plotly.express as px
-from googletrans import Translator
+# from googletrans import Translator  # Temporarily disabled for deployment
 # Removed sklearn imports - no longer using clustering
 import numpy as np
 
@@ -57,16 +57,8 @@ st.title("Trustpilot Review Analysis Dashboard")
 @st.cache_data
 def load_and_translate(filepath):
     df = pd.read_csv(filepath)
-    translator = Translator()
-    def translate_text(row):
-        if row['reviewLanguage'] == 'en':
-            return row['reviewText']
-        try:
-            translated = translator.translate(str(row['reviewText']), src=row['reviewLanguage'], dest='en')
-            return translated.text
-        except Exception:
-            return row['reviewText']
-    df['reviewText_en'] = df.apply(translate_text, axis=1)
+    # Temporarily disable translation for deployment
+    df['reviewText_en'] = df['reviewText']  # Use original text for now
     df['sentiment'] = df['reviewText_en'].apply(lambda text: TextBlob(str(text)).sentiment.polarity)
     df['sentiment_label'] = df['sentiment'].apply(
         lambda score: "positive" if score > 0.1 else ("negative" if score < -0.1 else "neutral")
