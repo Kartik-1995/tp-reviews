@@ -4,7 +4,7 @@ from textblob import TextBlob
 import plotly.express as px
 # from googletrans import Translator  # Temporarily disabled for deployment
 # Removed sklearn imports - no longer using clustering
-import numpy as np
+# import numpy as np  # Not currently used
 
 st.set_page_config(layout="wide", page_title="Trustpilot Review Dashboard")
 
