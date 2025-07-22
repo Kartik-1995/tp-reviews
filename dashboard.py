@@ -1,10 +1,36 @@
 import streamlit as st
 import pandas as pd
-from textblob import TextBlob
 import plotly.express as px
+import re
 # from googletrans import Translator  # Temporarily disabled for deployment
 # Removed sklearn imports - no longer using clustering
 # import numpy as np  # Not currently used
+
+def simple_sentiment_analysis(text):
+    """Simple sentiment analysis using keyword matching"""
+    text = str(text).lower()
+    
+    # Positive keywords
+    positive_words = ['good', 'great', 'excellent', 'amazing', 'wonderful', 'fantastic', 'love', 'like', 'happy', 'satisfied', 'recommend', 'best', 'awesome', 'perfect', 'outstanding', 'brilliant', 'superb', 'terrific', 'fabulous', 'marvelous']
+    
+    # Negative keywords
+    negative_words = ['bad', 'terrible', 'awful', 'horrible', 'worst', 'hate', 'dislike', 'disappointed', 'frustrated', 'angry', 'scam', 'fraud', 'fake', 'useless', 'waste', 'poor', 'terrible', 'awful', 'horrible', 'worst', 'hate', 'dislike', 'disappointed', 'frustrated', 'angry', 'scam', 'fraud', 'fake', 'useless', 'waste', 'poor', 'terrible', 'awful', 'horrible', 'worst', 'hate', 'dislike', 'disappointed', 'frustrated', 'angry', 'scam', 'fraud', 'fake', 'useless', 'waste', 'poor']
+    
+    # Count positive and negative words
+    positive_count = sum(1 for word in positive_words if word in text)
+    negative_count = sum(1 for word in negative_words if word in text)
+    
+    # Calculate sentiment score (-1 to 1)
+    total_words = len(text.split())
+    if total_words == 0:
+        return 0
+    
+    sentiment_score = (positive_count - negative_count) / max(total_words, 1)
+    
+    # Normalize to -1 to 1 range
+    sentiment_score = max(-1, min(1, sentiment_score * 10))
+    
+    return sentiment_score
 
 
 
@@ -63,7 +89,7 @@ def load_and_translate(filepath):
     # Filter to only English reviews
     df = df[df['reviewLanguage'] == 'en'].copy()
     df['reviewText_en'] = df['reviewText']  # Use original text for now
-    df['sentiment'] = df['reviewText_en'].apply(lambda text: TextBlob(str(text)).sentiment.polarity)
+    df['sentiment'] = df['reviewText_en'].apply(lambda text: simple_sentiment_analysis(text))
     df['sentiment_label'] = df['sentiment'].apply(
         lambda score: "positive" if score > 0.1 else ("negative" if score < -0.1 else "neutral")
     )
