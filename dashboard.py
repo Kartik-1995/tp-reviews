@@ -6,6 +6,43 @@ import plotly.express as px
 # Removed sklearn imports - no longer using clustering
 # import numpy as np  # Not currently used
 
+def chatbot_response(user_question, df):
+    """Simple chatbot that answers questions about the dataset"""
+    
+    # Convert question to lowercase for easier matching
+    question = user_question.lower()
+    
+    # Define response patterns
+    responses = {
+        "total reviews": f"There are {len(df):,} English reviews in the dataset.",
+        "average rating": f"The average rating is {df['reviewScore'].mean():.2f} out of 5.",
+        "sentiment": f"The average sentiment score is {df['sentiment'].mean():.3f} (range: -1 to 1).",
+        "positive": f"There are {len(df[df['sentiment_label'] == 'positive'])} positive reviews.",
+        "negative": f"There are {len(df[df['sentiment_label'] == 'negative'])} negative reviews.",
+        "neutral": f"There are {len(df[df['sentiment_label'] == 'neutral'])} neutral reviews.",
+        "rating distribution": f"Rating distribution: {df['reviewScore'].value_counts().sort_index().to_dict()}",
+        "top rating": f"The most common rating is {df['reviewScore'].mode().iloc[0]} stars.",
+        "lowest rating": f"The lowest rating given is {df['reviewScore'].min()} stars.",
+        "highest rating": f"The highest rating given is {df['reviewScore'].max()} stars.",
+        "sentiment distribution": f"Sentiment distribution: {df['sentiment_label'].value_counts().to_dict()}",
+        "help": "I can help you with: total reviews, average rating, sentiment analysis, rating distribution, positive/negative/neutral reviews, and more!",
+    }
+    
+    # Check for matches in the question
+    for key, response in responses.items():
+        if key in question:
+            return response
+    
+    # If no specific match, provide a general response
+    if any(word in question for word in ["how many", "count", "number"]):
+        return f"There are {len(df):,} English reviews in the dataset."
+    elif any(word in question for word in ["average", "mean", "rating"]):
+        return f"The average rating is {df['reviewScore'].mean():.2f} out of 5."
+    elif any(word in question for word in ["sentiment", "feeling", "emotion"]):
+        return f"The average sentiment score is {df['sentiment'].mean():.3f} (range: -1 to 1)."
+    else:
+        return f"I can help you analyze the {len(df):,} English reviews. Try asking about: total reviews, average rating, sentiment analysis, rating distribution, or positive/negative/neutral reviews. Type 'help' for more options!"
+
 st.set_page_config(layout="wide", page_title="Trustpilot Review Dashboard")
 
 # Global CSS for increased font size
@@ -574,6 +611,49 @@ try:
                     labels={'x': 'Rating', 'y': 'Count'}
                 )
                 st.plotly_chart(fig_rating, use_container_width=True)
+            # Chatbot Section
+            st.divider()
+            st.subheader("🤖 Dataset Chatbot")
+            st.markdown("Ask me anything about the Trustpilot reviews dataset!")
+            
+            # Initialize chat history
+            if "chat_history" not in st.session_state:
+                st.session_state.chat_history = []
+            
+            # Chat input
+            user_input = st.text_input("Ask a question about the dataset:", placeholder="e.g., How many reviews are there? What's the average rating?")
+            
+            if user_input:
+                # Get chatbot response
+                response = chatbot_response(user_input, df)
+                
+                # Add to chat history
+                st.session_state.chat_history.append({"user": user_input, "bot": response})
+            
+            # Display chat history
+            if st.session_state.chat_history:
+                st.markdown("**Chat History:**")
+                for i, chat in enumerate(st.session_state.chat_history):
+                    with st.container():
+                        col1, col2 = st.columns([1, 4])
+                        with col1:
+                            st.markdown("👤 **You:**")
+                        with col2:
+                            st.markdown(f"*{chat['user']}*")
+                        
+                        col1, col2 = st.columns([1, 4])
+                        with col1:
+                            st.markdown("🤖 **Bot:**")
+                        with col2:
+                            st.markdown(f"**{chat['bot']}**")
+                        st.divider()
+            
+            # Clear chat button
+            if st.button("🗑️ Clear Chat History"):
+                st.session_state.chat_history = []
+                st.rerun()
+            
+            st.divider()
             st.subheader("Browse Reviews (Original and Translated)")
             st.dataframe(df[[
                 'reviewScore', 'reviewLanguage', 'reviewTitle', 'reviewText', 'reviewText_en', 'sentiment_label', 'sentiment', 'reviewUrl'
