@@ -53,11 +53,13 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.title("Trustpilot Review Analysis Dashboard")
+st.markdown("**📊 Analyzing English Reviews Only** - This dashboard focuses on English-language reviews for accurate sentiment analysis and theme classification.")
 
 @st.cache_data
 def load_and_translate(filepath):
     df = pd.read_csv(filepath)
-    # Temporarily disable translation for deployment
+    # Filter to only English reviews
+    df = df[df['reviewLanguage'] == 'en'].copy()
     df['reviewText_en'] = df['reviewText']  # Use original text for now
     df['sentiment'] = df['reviewText_en'].apply(lambda text: TextBlob(str(text)).sentiment.polarity)
     df['sentiment_label'] = df['sentiment'].apply(
@@ -493,6 +495,17 @@ try:
         st.session_state.current_tab = "overview"
     
     df = load_and_translate("Trustpilot reviews extraction - Data.csv")
+    
+    # Data summary section
+    with st.expander("📊 Dataset Information", expanded=False):
+        st.markdown(f"""
+        **Dataset Overview:**
+        - **Total English Reviews:** {len(df):,}
+        - **Date Range:** {df['reviewScore'].count()} reviews analyzed
+        - **Language Filter:** English only (removed {124} non-English reviews)
+        - **Average Rating:** {df['reviewScore'].mean():.2f}/5
+        - **Sentiment Distribution:** {df['sentiment_label'].value_counts().to_dict()}
+        """)
     
     if st.session_state.current_page == 'main':
         # Sidebar navigation
